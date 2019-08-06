@@ -9,6 +9,8 @@ class D20:
     def __init__(self, location, size):
         self.location = location
         self.size = size
+        self.vbo = None
+        self.vao = None
 
         unit = self.size / sqrt(5)
         self.vertices = [2, 1, 0, 2, -1, 0, -2, -1, 0, -2, 1, 0,
@@ -26,13 +28,32 @@ class D20:
 
         self.vertex_buffer = []
         for e in range(0, len(self.elements), 3):
-            v1 = glm.vec3(*self.vertices[e*3: e*3+3])
-            v2 = glm.vec3(*self.vertices[(e+1)*3: (e+1)*3+3])
-            v3 = glm.vec3(*self.vertices[(e+2)*3: (e+2)*3+3])
-            normal = glm.cross(v1-v2, v1-v3)
-            self.vertex_buffer += Vertex(v1, normal).export()
-            self.vertex_buffer += Vertex(v2, normal).export()
-            self.vertex_buffer += Vertex(v3, normal).export()
+            base_ids = self.elements[e: e+3]
+            vectors = [glm.vec3(*self.vertices[b*3: b*3+3]) for b in base_ids]
+            for v in vectors:
+                self.vertex_buffer += Vertex(v).export()
+            # v1 = glm.vec3(*self.vertices[e*3: e*3+3])
+            # v2 = glm.vec3(*self.vertices[(e+1)*3: (e+1)*3+3])
+            # v3 = glm.vec3(*self.vertices[(e+2)*3: (e+2)*3+3])
+            # # normal = glm.cross(v1-v2, v1-v3)
+            # # self.vertex_buffer += Vertex(v1, normal).export()
+            # # self.vertex_buffer += Vertex(v2, normal).export()
+            # # self.vertex_buffer += Vertex(v3, normal).export()
+            # self.vertex_buffer += Vertex(v1).export()
+            # self.vertex_buffer += Vertex(v2).export()
+            # self.vertex_buffer += Vertex(v3).export()
+
+    def make(self):
+        vertex_buf = (GLfloat * len(self.vertex_buffer))(*self.vertex_buffer)
+        self.vao = glGenVertexArrays(1)
+        self.vbo = glGenBuffers(1)
+        glBindVertexArray(self.vao)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buf), vertex_buf, GL_STATIC_DRAW)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(c_float), None)
+        # glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(c_float), None)
+        # glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(c_float), 3 * sizeof(c_float))
+        glEnableVertexAttribArray(0)
 
 # class D20:
 #     def __init__(self, x, y, z, r):

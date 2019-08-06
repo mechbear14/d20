@@ -40,8 +40,7 @@ class Shader:
         self.id = glCreateShader(self.kind)
         glShaderSource(self.id, self.source)
         glCompileShader(self.id)
-        if glGetShaderiv(self.id, GL_COMPILE_STATUS) != b"":
-            raise Error(glGetShaderInfoLog(self.id))
+        print(glGetShaderInfoLog(self.id))
 
 
 class ShaderProgram:
@@ -59,18 +58,17 @@ class ShaderProgram:
         for shader in self.shaders:
             glAttachShader(self.program, shader.id)
         glLinkProgram(self.program)
-        if glGetProgramiv(self.program, GL_LINK_STATUS) != b"":
-            raise Error(glGetProgramInfoLog(self.program))
+        print(glGetProgramInfoLog(self.program))
         for shader in self.shaders:
             glDeleteShader(shader.id)
 
     def set_mat4(self, prop, mat4):
         loc = glGetUniformLocation(self.program, prop)
-        glUniform4f(loc, glm.value_ptr(mat4))
+        glUniform4fv(loc, 1, glm.value_ptr(mat4))
 
     def set_vec3(self, prop, vec3):
         loc = glGetUniformLocation(self.program, prop)
-        glUniform3f(loc, glm.value_ptr(vec3))
+        glUniform3fv(loc, 1, glm.value_ptr(vec3))
 
     def use(self):
         glUseProgram(self.program)
