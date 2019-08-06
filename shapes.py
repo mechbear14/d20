@@ -11,6 +11,9 @@ class D20:
         self.z = z
         self.r = r
 
+        # TODO: Use this first
+        self.location = glm.vec3(x, y, z)
+
         l = r / sqrt(5)
         self.vertices = [2, 1, 0, 2, -1, 0, -2, -1, 0, -2, 1, 0,
                          1, 0, 2, 1, 0, -2, -1, 0, -2, -1, 0, 2,
@@ -41,17 +44,26 @@ class D20:
     def compile(self):
         vert = """#version 430 core
         layout (location = 0) in vec3 aPos;
-        uniform mat4 rotation;
+        
+        uniform mat4 world;
+        uniform mat4 view;
+        uniform mat4 projection;
         
         void main(){
-            gl_Position = rotation * vec4(aPos, 1.0);
+            gl_Position = projection * view * world * vec4(aPos, 1.0);
         }
         """
         frag = """#version 430 core
         out vec4 Colour;
         
+        uniform vec3 aColour;
+        uniform vec3 lightColour;
+        
         void main(){
-            Colour = vec4(1.0, 1.0, 1.0, 1.0);
+            float ambientStrength = 0.1;
+            vec3 ambient = ambientStrength * lightColour;
+            vec3 ambientColour = ambient * aColour;
+            Colour = vec4(ambientColour, 1.0);
         }
         """
         vs = glCreateShader(GL_VERTEX_SHADER)
@@ -83,14 +95,19 @@ class D20:
 
     # def render(self, screen):
         # draw_elements(3, self.attributes, self.elements, screen, 0, floor(len(self.elements) / 3))
-    def render(self):
-        rotation = glGetUniformLocation(self.program, "rotation")
-        unit = glm.mat4(1.0)
-        rotation_mat = glm.rotate(unit, glm.radians(self.rot), glm.vec3(1.0, 0.0, 0.0))
+    def render(self, world, view, projection, lamp):
         glUseProgram(self.program)
         glBindVertexArray(self.vao)
-        glUniformMatrix4fv(rotation, 1, GL_FALSE, glm.value_ptr(rotation_mat))
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+        world_loc = glGetUniformLocation(self.program, "world")
+        glUniformMatrix4fv(world_loc, 1, GL_FALSE, glm.value_ptr(world))
+        view_loc = glGetUniformLocation(self.program, "view")
+        glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm.value_ptr(view))
+        proj_loc = glGetUniformLocation(self.program, "projection")
+        glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm.value_ptr(projection))
+        light_colour_loc = glGetUniformLocation(self.program, "lightColour")
+        glUniform3fv(light_colour_loc, 1, glm.value_ptr(lamp))
+        colour_loc = glGetUniformLocation(self.program, "aColour")
+        glUniform3fv(colour_loc, 1, glm.value_ptr(glm.vec3(1.0, 0.5, 0.0)))
         glDrawElements(GL_TRIANGLES, len(self.elements), GL_UNSIGNED_INT, None)
 
     def rotate(self, a):
