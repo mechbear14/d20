@@ -51,7 +51,7 @@ class D20:
         out vec4 Colour;
         
         void main(){
-            Colour = vec4(1.0, 1.0, 1.0, 1.0);
+            Colour = vec4(0.0, 0.2, 0.0, 1.0);
         }
         """
         vs = glCreateShader(GL_VERTEX_SHADER)

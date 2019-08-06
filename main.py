@@ -7,7 +7,7 @@ from shapes import D20
 pygame.init()
 screen = pygame.display.set_mode((600, 600), flags=DOUBLEBUF | OPENGL)
 # pygame.draw.rect(screen, (0, 0, 0), (0, 0, 960, 540))
-dice = D20(0, 0, 0, 0.2)
+dice = D20(0, 0, 0, 0.5)
 dice.compile()
 
 while True:
