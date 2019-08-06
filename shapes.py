@@ -1,5 +1,4 @@
-from math import sqrt, floor, cos, sin
-# from temp_gl import *
+from math import sqrt
 from OpenGL.GL import *
 from ctypes import c_float
 import glm
