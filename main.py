@@ -1,14 +1,21 @@
 import pygame
+from pygame.locals import *
+from OpenGL.GL import *
 import sys
 from shapes import D20
 
-screen = pygame.display.set_mode((960, 540))
-pygame.draw.rect(screen, (0, 0, 0), (0, 0, 960, 540))
-dice = D20(100, 100, 0, 100)
+pygame.init()
+screen = pygame.display.set_mode((600, 600), flags=DOUBLEBUF | OPENGL)
+# pygame.draw.rect(screen, (0, 0, 0), (0, 0, 960, 540))
+dice = D20(0, 0, 0, 0.2)
+dice.compile()
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
-    dice.render(screen)
+    glClearColor(0.0, 0.0, 0.0, 1.0)
+    glClear(GL_COLOR_BUFFER_BIT)
+    dice.rotate(pygame.time.get_ticks() * 0.05)
+    dice.render()
     pygame.display.flip()

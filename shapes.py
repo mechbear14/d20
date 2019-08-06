@@ -1,5 +1,8 @@
-from math import sqrt, floor
-from temp_gl import *
+from math import sqrt, floor, cos, sin
+# from temp_gl import *
+from OpenGL.GL import *
+from ctypes import c_float
+import glm
 
 
 class D20:
@@ -29,8 +32,67 @@ class D20:
         for t in range(len(self.elements)):
             self.elements[t] -= 1
 
-        self.attributes = []
-        get_attribute(self.vertices, self.attributes, 0, 3, 3)
+        self.program = None
+        self.vao = None
+        self.rot = 0
 
-    def render(self, screen):
-        draw_elements(3, self.attributes, self.elements, screen, 0, floor(len(self.elements) / 3))
+        # self.attributes = []
+        # get_attribute(self.vertices, self.attributes, 0, 3, 3)
+
+    def compile(self):
+        vert = """#version 430 core
+        layout (location = 0) in vec3 aPos;
+        uniform mat4 rotation;
+        
+        void main(){
+            gl_Position = rotation * vec4(aPos, 1.0);
+        }
+        """
+        frag = """#version 430 core
+        out vec4 Colour;
+        
+        void main(){
+            Colour = vec4(1.0, 1.0, 1.0, 1.0);
+        }
+        """
+        vs = glCreateShader(GL_VERTEX_SHADER)
+        glShaderSource(vs, vert)
+        glCompileShader(vs)
+        print(glGetShaderInfoLog(vs))
+        fs = glCreateShader(GL_FRAGMENT_SHADER)
+        glShaderSource(fs, frag)
+        glCompileShader(fs)
+        print(glGetShaderInfoLog(fs))
+        self.program = glCreateProgram()
+        glAttachShader(self.program, vs)
+        glAttachShader(self.program, fs)
+        glLinkProgram(self.program)
+        print(glGetProgramInfoLog(self.program))
+
+        vertex_buf = (GLfloat * len(self.vertices))(*self.vertices)
+        element_buf = (GLuint * len(self.elements))(*self.elements)
+        self.vao = glGenVertexArrays(1)
+        vbo = glGenBuffers(1)
+        ebo = glGenBuffers(1)
+        glBindVertexArray(self.vao)
+        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buf), vertex_buf, GL_STATIC_DRAW)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(element_buf), element_buf, GL_STATIC_DRAW)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(c_float), None)
+        glEnableVertexAttribArray(0)
+
+    # def render(self, screen):
+        # draw_elements(3, self.attributes, self.elements, screen, 0, floor(len(self.elements) / 3))
+    def render(self):
+        rotation = glGetUniformLocation(self.program, "rotation")
+        unit = glm.mat4(1.0)
+        rotation_mat = glm.rotate(unit, glm.radians(self.rot), glm.vec3(1.0, 0.0, 0.0))
+        glUseProgram(self.program)
+        glBindVertexArray(self.vao)
+        glUniformMatrix4fv(rotation, 1, GL_FALSE, glm.value_ptr(rotation_mat))
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+        glDrawElements(GL_TRIANGLES, len(self.elements), GL_UNSIGNED_INT, None)
+
+    def rotate(self, a):
+        self.rot = a
